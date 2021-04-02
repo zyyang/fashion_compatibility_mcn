@@ -55,7 +55,7 @@ def train(model, device, train_loader, val_loader, comment):
     epochs = 50
     for epoch in range(1, epochs + 1):
         logging.info("Train Phase, Epoch: {}".format(epoch))
-        scheduler.step()
+        #scheduler.step()
         total_losses = AverageMeter()
         clf_losses = AverageMeter()
         vse_losses = AverageMeter()
@@ -127,6 +127,7 @@ def train(model, device, train_loader, val_loader, comment):
 
         # Save best model
         saver.save(auc, model.state_dict())
+        scheduler.step()
 
 if __name__ == "__main__":
     train(model, device, train_loader, val_loader, comment)

@@ -23,10 +23,11 @@ from PIL import Image
 
 train_dataset, _, _, _, test_dataset, _ = prepare_dataloaders(num_workers=1)
 # Load pretrained weights
-device = torch.device('cpu')
+device = torch.device('cuda')
 # print(len(.vocabulary)) # 2757
 model = CompatModel(embed_size=1000, need_rep=True, vocabulary=2757).to(device)
-model.load_state_dict(torch.load("../mcn/model_train_relation_vse_type_cond_scales.pth", map_location="cpu"))
+model.load_state_dict(torch.load("../mcn/model_train.pth", map_location="cuda"))
+#model.load_state_dict(torch.load("../mcn/model_train_relation_vse_type_cond_scales.pth", map_location="cpu"))
 model.eval()
 for name, param in model.named_parameters():
     if 'fc' not in name:
@@ -86,7 +87,7 @@ def vec2mat(relation, select):
     """
     mats = []
     for idx in range(4):
-        mat = torch.zeros(5, 5)
+        mat = torch.zeros(5, 5).cuda()
         mat[np.triu_indices(5)] = relation[15*idx:15*(idx+1)]
         mat += torch.triu(mat, 1).transpose(0, 1)
         mat = mat[select, :]
@@ -98,8 +99,8 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-root = "/home/wangx/fashion_compatibility_mcn/data"
-root = "/mnt/iusers01/fatpou01/matsci01/t80083xw/scratch/fashion_compatibility_mcn/data"
+root = "/home/fuguang/fashion_compatibility_mcn/data"
+#root = "/mnt/iusers01/fatpou01/matsci01/t80083xw/scratch/fashion_compatibility_mcn/data"
 img_root = os.path.join(root, "images")
 json_file = os.path.join(root, "test_no_dup_with_category_3more_name.json")
 
@@ -355,7 +356,7 @@ def item_diagnosis(relation, select):
     """
     mats = vec2mat(relation, select)
     for m in mats:
-        mask = torch.eye(*m.shape).byte()
+        mask = torch.eye(*m.shape).cuda().byte()
         m.masked_fill_(mask, 0)
     result = torch.cat(mats).sum(dim=0)
     order = [i for i, j in sorted(enumerate(result), key=lambda x:x[1], reverse=True)]
@@ -418,5 +419,5 @@ def base64_to_image(base64_str):
     return img
 
 if __name__ == "__main__":
-    app.run_server(debug=True, host='0.0.0.0')
+    app.run_server(debug=True, host='0.0.0.0', port=10001)
 
